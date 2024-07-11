@@ -3,6 +3,7 @@ package sqlite
 import (
 	"GoURLShortener/internal/storage"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 )
@@ -47,11 +48,12 @@ func (s *Storage) SaveURL(UrlToSave string, alias string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
+	defer stmt.Close()
 
 	res, err := stmt.Exec(UrlToSave, alias)
 	if err != nil {
 		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-			return 0, fmt.Errorf("%s: %w", op, storage.ErrURLExists2) // ПОМОГИ ВЕРНУТЬ ОШИБКУ
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrURLExists2)
 		}
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -65,5 +67,71 @@ func (s *Storage) SaveURL(UrlToSave string, alias string) (int64, error) {
 }
 
 func (s *Storage) GetURL(alias string) (string, error) {
-	return "", nil
+	const op = "storage.sqlite.GetURL"
+	var resUrl string
+
+	stmt, err := s.db.Prepare("SELECT url.url FROM url WHERE alias == ?")
+	if err != nil {
+		return "", fmt.Errorf("%s: prepare statement: %w", op, err)
+	}
+
+	err = stmt.QueryRow(alias).Scan(&resUrl)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("%s: no url found for alias %s", op, alias)
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return resUrl, nil
+}
+
+func (s *Storage) UpdateURL(newURL string, alias string) (int64, error) {
+	const op = "storage.sqlite.UpdateURL"
+
+	stmt, err := s.db.Prepare("UPDATE url SET url = ? WHERE alias = ?")
+	if err != nil {
+		return 0, fmt.Errorf("%s: prepare statement: %w", op, err)
+	}
+	defer stmt.Close() // Убедитесь, что stmt будет закрыт после использования
+
+	res, err := stmt.Exec(newURL, alias)
+	if err != nil {
+		return 0, fmt.Errorf("%s: execute statement: %w", op, err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("%s: getting rows affected: %w", op, err)
+	}
+
+	if rowsAffected == 0 {
+		return 0, fmt.Errorf("%s: no url found for alias %s", op, alias)
+	}
+
+	return rowsAffected, nil
+}
+
+func (s *Storage) DeleteURL(alias string) error {
+	const op = "storage.sqlite.DeleteURL"
+
+	stmt, err := s.db.Prepare("DELETE FROM url WHERE url.alias == ?")
+	if err != nil {
+		return fmt.Errorf("%s: prepare statement: %w", op, err)
+	}
+
+	res, err := stmt.Exec(alias)
+	if err != nil {
+		fmt.Errorf("%s: execute statement: %w", op, err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: getting rows affected: %w", op, err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("%s: no url found for alias %s", op, alias)
+	}
+
+	return nil
 }

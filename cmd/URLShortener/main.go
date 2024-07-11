@@ -17,10 +17,9 @@ const (
 
 func main() {
 	cfg := config.ConfLoad()
-
-	fmt.Printf("cfg.Env = %s\n", cfg.Env)
-
 	log := setupLogger(cfg.Env)
+	//fmt.Printf("cfg.Env = %s\n", cfg.Env)
+
 	log.Info("Starting GoUrlShortener", slog.String("env", cfg.Env))
 	log.Debug("Debug message for test")
 
@@ -29,23 +28,12 @@ func main() {
 		log.Error("failed to init storage", sl.Err(err))
 		os.Exit(1)
 	}
-
-	id, err := storage.SaveURL("http://doloresl.ru", "doloresl")
-	if err != nil {
-		log.Error("failed to save url", sl.Err(err))
-		os.Exit(1)
-	}
-	log.Info("saved url", slog.Int64("id", id))
-
-	id, err = storage.SaveURL("http://doloresl.ru", "doloresl")
-	if err != nil {
-		log.Error("failed to save url", sl.Err(err))
-		os.Exit(1)
-	}
-
 	_ = storage
-
 	fmt.Println(cfg)
+
+	// TODO: init router: gin, chi, gorilla
+
+	// TODO: run server
 }
 
 func setupLogger(env string) *slog.Logger {
