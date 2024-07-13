@@ -6,7 +6,7 @@ import (
 	"GoURLShortener/internal/lib/random"
 	"GoURLShortener/internal/storage"
 	"errors"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"log/slog"

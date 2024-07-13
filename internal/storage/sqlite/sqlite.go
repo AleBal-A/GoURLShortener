@@ -78,7 +78,7 @@ func (s *Storage) GetURL(alias string) (string, error) {
 	err = stmt.QueryRow(alias).Scan(&resUrl)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", fmt.Errorf("%s: no url found for alias %s", op, alias)
+			return "", storage.ErrURLNotFound
 		}
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -93,7 +93,7 @@ func (s *Storage) UpdateURL(newURL string, alias string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("%s: prepare statement: %w", op, err)
 	}
-	defer stmt.Close() // Убедитесь, что stmt будет закрыт после использования
+	defer stmt.Close()
 
 	res, err := stmt.Exec(newURL, alias)
 	if err != nil {
