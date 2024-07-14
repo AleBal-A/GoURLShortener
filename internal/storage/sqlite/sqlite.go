@@ -122,7 +122,7 @@ func (s *Storage) DeleteURL(alias string) error {
 
 	res, err := stmt.Exec(alias)
 	if err != nil {
-		fmt.Errorf("%s: execute statement: %w", op, err)
+		return fmt.Errorf("%s: execute statement: %w", op, err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
@@ -130,7 +130,7 @@ func (s *Storage) DeleteURL(alias string) error {
 		return fmt.Errorf("%s: getting rows affected: %w", op, err)
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("%s: no url found for alias %s", op, alias)
+		return storage.ErrURLNotFound
 	}
 
 	return nil

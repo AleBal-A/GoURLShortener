@@ -5,7 +5,7 @@ import (
 	"GoURLShortener/internal/lib/logger/sl"
 	"GoURLShortener/internal/storage"
 	"errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"log/slog"

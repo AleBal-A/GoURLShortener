@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoURLShortener/internal/config"
+	"GoURLShortener/internal/http-server/handlers/url/delete"
 	"GoURLShortener/internal/http-server/handlers/url/redirect"
 	"GoURLShortener/internal/http-server/handlers/url/save"
 	mwLogger "GoURLShortener/internal/http-server/middleware/logger"
@@ -9,8 +10,8 @@ import (
 	"GoURLShortener/internal/lib/logger/sl"
 	"GoURLShortener/internal/storage/sqlite"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
 	"os"
@@ -25,7 +26,6 @@ const (
 func main() {
 	cfg := config.ConfLoad()
 	log := setupLogger(cfg.Env)
-	//fmt.Printf("cfg.Env = %s\n", cfg.Env)
 
 	log.Info("Starting GoUrlShortener", slog.String("env", cfg.Env))
 	log.Debug("Debug message for test")
@@ -36,8 +36,7 @@ func main() {
 		log.Error("failed to init storage", sl.Err(err))
 		os.Exit(1)
 	}
-	_ = storage
-	fmt.Println(cfg)
+	fmt.Println("cfg: ", cfg)
 
 	router := chi.NewRouter()
 
@@ -49,6 +48,7 @@ func main() {
 
 	router.Post("/url", save.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
+	router.Delete("/url/{alias}", delete.New(log, storage))
 
 	log.Info("Starting server", slog.String("address", cfg.Address))
 
