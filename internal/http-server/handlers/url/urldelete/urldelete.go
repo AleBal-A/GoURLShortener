@@ -1,4 +1,4 @@
-package delete
+package urldelete
 
 import (
 	resp "GoURLShortener/internal/lib/api/response"

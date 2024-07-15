@@ -2,9 +2,9 @@ package main
 
 import (
 	"GoURLShortener/internal/config"
-	"GoURLShortener/internal/http-server/handlers/url/delete"
 	"GoURLShortener/internal/http-server/handlers/url/redirect"
 	"GoURLShortener/internal/http-server/handlers/url/save"
+	"GoURLShortener/internal/http-server/handlers/url/urldelete"
 	mwLogger "GoURLShortener/internal/http-server/middleware/logger"
 	"GoURLShortener/internal/lib/logger/handlers/slogpretty"
 	"GoURLShortener/internal/lib/logger/sl"
@@ -41,14 +41,22 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
+	//router.Use(middleware.Logger)
 	router.Use(mwLogger.New(log))
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
-	router.Delete("/url/{alias}", delete.New(log, storage))
+
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("URLShortener", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/", save.New(log, storage))
+		r.Delete("/{alias}", urldelete.New(log, storage))
+
+	})
 
 	log.Info("Starting server", slog.String("address", cfg.Address))
 
@@ -60,7 +68,6 @@ func main() {
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
 	}
 
-	// TODO: run server
 	if err := srv.ListenAndServe(); err != nil {
 		log.Error("Failed to start server")
 	}
@@ -75,9 +82,6 @@ func setupLogger(env string) *slog.Logger {
 	switch env {
 	case envLocal:
 		log = setupPrettySlog()
-		//log = slog.New(
-		//	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		//)
 	case envDev:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
