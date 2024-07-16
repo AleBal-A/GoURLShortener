@@ -11,7 +11,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      HOST: root@185.246.118.231
+      HOST: root@185.246.118.245
       DEPLOY_DIRECTORY: /root/apps/GoURLShortener
       CONFIG_PATH: /root/apps/GoURLShortener/config/prod.yaml
       ENV_FILE_PATH: /root/apps/GoURLShortener/config.env
