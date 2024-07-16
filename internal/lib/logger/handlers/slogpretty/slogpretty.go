@@ -1,3 +1,4 @@
+// Позволяет выводить красивые логи в JSON
 package slogpretty
 
 import (
